@@ -44,7 +44,6 @@ services:
       dockerfile: Workers.Email/Dockerfile
     container_name: notif-email-worker
     environment:
-      ASPNETCORE_URLS: http://+:8081
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: guest
       RabbitMq__Password: guest
@@ -59,7 +58,6 @@ services:
       dockerfile: Workers.Push/Dockerfile
     container_name: notif-push-worker
     environment:
-      ASPNETCORE_URLS: http://+:8082
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: guest
       RabbitMq__Password: guest

@@ -1,7 +1,15 @@
 using MassTransit;
-using Notifications.Contracts;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Notifications.SendingSimulator;
+using Prometheus;
+using Workers.Push.Consumers;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.UseUrls("http://0.0.0.0:8082");
+
+builder.Services.AddSingleton<INotificationSendingSimulator, InMemoryNotificationSendingSimulator>();
 
 builder.Services.AddMassTransit(x =>
 {
@@ -9,7 +17,7 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        var host = builder.Configuration["RabbitMq:Host"] ?? "localhost";
+        var host = builder.Configuration["RabbitMq:Host"] ?? "rabbitmq";
         var user = builder.Configuration["RabbitMq:Username"] ?? "guest";
         var pass = builder.Configuration["RabbitMq:Password"] ?? "guest";
 
@@ -21,24 +29,19 @@ builder.Services.AddMassTransit(x =>
 
         cfg.ReceiveEndpoint("push.dispatch", e =>
         {
-            // wymaganie: 1 wiadomoœæ na raz
+            // 1 wiadomoœæ na raz
             e.PrefetchCount = 1;
             e.ConcurrentMessageLimit = 1;
+            // max trzy próby
+            e.UseMessageRetry(r => r.Immediate(2));
 
             e.ConfigureConsumer<PushDispatchConsumer>(context);
         });
     });
 });
 
-var host = builder.Build();
-await host.RunAsync();
+var app = builder.Build();
 
-public sealed class PushDispatchConsumer : IConsumer<DispatchNotification>
-{
-    public Task Consume(ConsumeContext<DispatchNotification> context)
-    {
-        // Na razie tylko log — w³aœciw¹ logikê przeniesiemy do SendingSimulator.
-        Console.WriteLine($"[PUSH] Got message: {context.Message.NotificationId} to {context.Message.Recipient}");
-        return Task.CompletedTask;
-    }
-}
+app.MapMetrics("/metrics");
+
+await app.RunAsync();

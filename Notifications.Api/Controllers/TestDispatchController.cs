@@ -8,9 +8,10 @@ namespace Notifications.Api.Controllers
     [Route("api/test-dispatch")]
     public sealed class TestDispatchController : ControllerBase
     {
-        private readonly IPublishEndpoint _publish;
+        private readonly ISendEndpointProvider _sendEndpointProvider;
 
-        public TestDispatchController(IPublishEndpoint publish) => _publish = publish;
+        public TestDispatchController(ISendEndpointProvider sendEndpointProvider)
+        => _sendEndpointProvider = sendEndpointProvider;
 
         [HttpPost("email")]
         public async Task<IActionResult> Email()
@@ -19,11 +20,13 @@ namespace Notifications.Api.Controllers
                 Guid.NewGuid(),
                 ChannelType.Email,
                 "test@example.com",
-                "Test",
+                "Test EMAIL",
                 "Hello",
                 DateTime.UtcNow);
 
-            await _publish.Publish(msg);
+            var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:email.dispatch"));
+            await endpoint.Send(msg);
+
             return Ok(new { msg.NotificationId });
         }
 
@@ -34,11 +37,13 @@ namespace Notifications.Api.Controllers
                 Guid.NewGuid(),
                 ChannelType.Push,
                 "device-123",
-                "Test",
+                "Test PUSH",
                 "Hello",
                 DateTime.UtcNow);
 
-            await _publish.Publish(msg);
+            var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:push.dispatch"));
+            await endpoint.Send(msg);
+
             return Ok(new { msg.NotificationId });
         }
     }

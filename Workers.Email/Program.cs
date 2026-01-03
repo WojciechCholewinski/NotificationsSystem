@@ -1,15 +1,25 @@
 using MassTransit;
-using Notifications.Contracts;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Notifications.SendingSimulator;
+using Prometheus;
+using Workers.Email.Consumers;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
+// Wymuszamy nas³uch na 0.0.0.0:8081 (wa¿ne w Dockerze)
+builder.WebHost.UseUrls("http://0.0.0.0:8081");
+
+builder.Services.AddSingleton<INotificationSendingSimulator, InMemoryNotificationSendingSimulator>();
+
+// MassTransit
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<EmailDispatchConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        var host = builder.Configuration["RabbitMq:Host"] ?? "localhost";
+        var host = builder.Configuration["RabbitMq:Host"] ?? "rabbitmq";
         var user = builder.Configuration["RabbitMq:Username"] ?? "guest";
         var pass = builder.Configuration["RabbitMq:Password"] ?? "guest";
 
@@ -21,24 +31,18 @@ builder.Services.AddMassTransit(x =>
 
         cfg.ReceiveEndpoint("email.dispatch", e =>
         {
-            // wymaganie: 1 wiadomoœæ na raz
             e.PrefetchCount = 1;
             e.ConcurrentMessageLimit = 1;
+            e.UseMessageRetry(r => r.Immediate(2));
 
             e.ConfigureConsumer<EmailDispatchConsumer>(context);
         });
     });
 });
 
-var host = builder.Build();
-await host.RunAsync();
+var app = builder.Build();
 
-public sealed class EmailDispatchConsumer : IConsumer<DispatchNotification>
-{
-    public Task Consume(ConsumeContext<DispatchNotification> context)
-    {
-        // Na razie tylko log — w³aœciw¹ logikê przeniesiemy do SendingSimulator.
-        Console.WriteLine($"[EMAIL] Got message: {context.Message.NotificationId} to {context.Message.Recipient}");
-        return Task.CompletedTask;
-    }
-}
+// Endpoint metryk
+app.MapMetrics("/metrics");
+
+await app.RunAsync();
