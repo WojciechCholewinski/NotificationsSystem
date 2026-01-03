@@ -15,5 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Notifications.SendingSimulator\Notifications.SendingSimulator.csproj" />
+    <ProjectReference Include="..\Notifications.Contracts\Notifications.Contracts.csproj" />
   </ItemGroup>
 </Project>
