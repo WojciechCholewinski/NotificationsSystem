@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: notif-postgres
+    environment:
+      POSTGRES_USER: notif
+      POSTGRES_PASSWORD: notif
+      POSTGRES_DB: notifications
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: notif-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  api:
+    build:
+      context: .
+      dockerfile: Notifications.Api/Dockerfile
+    container_name: notif-api
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Db: Host=postgres;Port=5432;Database=notifications;Username=notif;Password=notif
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  email-worker:
+    build:
+      context: .
+      dockerfile: Workers.Email/Dockerfile
+    container_name: notif-email-worker
+    environment:
+      ASPNETCORE_URLS: http://+:8081
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+    ports:
+      - "8081:8081"
+    depends_on:
+      - rabbitmq
+
+  push-worker:
+    build:
+      context: .
+      dockerfile: Workers.Push/Dockerfile
+    container_name: notif-push-worker
+    environment:
+      ASPNETCORE_URLS: http://+:8082
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+    ports:
+      - "8082:8082"
+    depends_on:
+      - rabbitmq
+
+volumes:
+  postgres_data:
