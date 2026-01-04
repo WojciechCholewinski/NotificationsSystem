@@ -1,5 +1,7 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Notifications.Api.Background;
+using Notifications.Application.Scheduling;
 using Notifications.Infrastructure.Persistence;
 using System.Text.Json.Serialization;
 
@@ -33,6 +35,8 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
+builder.Services.AddSingleton<IQuietHoursPlanner, QuietHoursPlanner>();
+builder.Services.AddHostedService<NotificationsDispatcher>();
 
 var app = builder.Build();
 
