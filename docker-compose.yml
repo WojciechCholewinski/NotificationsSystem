@@ -28,7 +28,7 @@ services:
     container_name: notif-api
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Db: Host=postgres;Port=5432;Database=notifications;Username=notif;Password=notif
+      ConnectionStrings__NotificationsDb: Host=postgres;Port=5432;Database=notifications;Username=notif;Password=notif
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: guest
       RabbitMq__Password: guest

@@ -4,7 +4,7 @@ namespace Notifications.SendingSimulator
 {
     public sealed record NotificationSendRequest(
         Guid NotificationId,
-        ChannelType Channel,
+        ChannelTypeDto Channel,
         string Recipient,
         string Title,
         string Body);

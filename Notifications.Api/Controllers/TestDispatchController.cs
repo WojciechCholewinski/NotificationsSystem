@@ -18,7 +18,7 @@ namespace Notifications.Api.Controllers
         {
             var msg = new DispatchNotification(
                 Guid.NewGuid(),
-                ChannelType.Email,
+                ChannelTypeDto.Email,
                 "test@example.com",
                 "Test EMAIL",
                 "Hello",
@@ -35,7 +35,7 @@ namespace Notifications.Api.Controllers
         {
             var msg = new DispatchNotification(
                 Guid.NewGuid(),
-                ChannelType.Push,
+                ChannelTypeDto.Push,
                 "device-123",
                 "Test PUSH",
                 "Hello",

@@ -1,10 +1,22 @@
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using Notifications.Infrastructure.Persistence;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var conn = builder.Configuration.GetConnectionString("NotificationsDb");
+builder.Services.AddDbContext<NotificationsDbContext>(opt =>
+    opt.UseNpgsql(conn));
 
 builder.Services.AddMassTransit(x =>
 {
