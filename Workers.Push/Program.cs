@@ -7,6 +7,7 @@ using Workers.Push.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Wymuszamy nas³uch na 0.0.0.0:8082 (wa¿ne w Dockerze)
 builder.WebHost.UseUrls("http://0.0.0.0:8082");
 
 builder.Services.AddSingleton<INotificationSendingSimulator, InMemoryNotificationSendingSimulator>();
@@ -32,8 +33,6 @@ builder.Services.AddMassTransit(x =>
             // 1 wiadomoœæ na raz
             e.PrefetchCount = 1;
             e.ConcurrentMessageLimit = 1;
-            // max trzy próby
-            e.UseMessageRetry(r => r.Immediate(2));
 
             e.ConfigureConsumer<PushDispatchConsumer>(context);
         });

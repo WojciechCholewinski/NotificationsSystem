@@ -25,7 +25,7 @@ public sealed class InMemoryNotificationSendingSimulator : INotificationSendingS
         if (_sentIds.ContainsKey(request.NotificationId))
         {
             _logger.LogInformation("[SIMULATOR] Duplicate ignored. NotificationId={NotificationId}", request.NotificationId);
-            return Task.FromResult(SendOutcome.AlreadySent);
+            return Task.FromResult(SendOutcome.Duplicate);
         }
 
         // ~30% niepowodzeń
@@ -36,8 +36,8 @@ public sealed class InMemoryNotificationSendingSimulator : INotificationSendingS
             _logger.LogWarning("[SIMULATOR] FAILED ({Channel}) NotificationId={NotificationId} Recipient={Recipient}",
                 request.Channel, request.NotificationId, request.Recipient);
 
-            // Rzucamy wyjątek -> MassTransit uruchomi retry
-            throw new SimulatedSendFailedException($"Simulated failure for {request.Channel}, id={request.NotificationId}");
+
+            return Task.FromResult(SendOutcome.Failed);
         }
 
         // SUKCES: zapisujemy ID (idempotencja)

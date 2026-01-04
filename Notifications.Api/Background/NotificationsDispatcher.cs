@@ -64,7 +64,7 @@ public sealed class NotificationsDispatcher : BackgroundService
             {
                 var nextUtc = planner.GetNextAllowedUtc(n, now);
                 // ustawiamy nowy termin wysyłki
-                n.ForceSendNow(nextUtc); // tu używamy metody zmieniającej ScheduledAtUtc   // TODO: zmienić docelowo nazwę tej metodki na np MoveTo, bo tutaj nazwa wprowadza w błąd
+                n.Reschedule(nextUtc); // tu używamy metody zmieniającej ScheduledAtUtc
                 continue;
             }
 

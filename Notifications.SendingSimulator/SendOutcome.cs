@@ -3,6 +3,7 @@
     public enum SendOutcome
     {
         Sent,
-        AlreadySent
+        Duplicate,
+        Failed
     }
 }

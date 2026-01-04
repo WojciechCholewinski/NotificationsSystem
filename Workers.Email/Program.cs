@@ -33,7 +33,6 @@ builder.Services.AddMassTransit(x =>
         {
             e.PrefetchCount = 1;
             e.ConcurrentMessageLimit = 1;
-            e.UseMessageRetry(r => r.Immediate(2));
 
             e.ConfigureConsumer<EmailDispatchConsumer>(context);
         });

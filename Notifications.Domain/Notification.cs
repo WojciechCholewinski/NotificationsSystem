@@ -159,16 +159,13 @@ public sealed class Notification
         ScheduledAtUtc = utcNow;
         Touch();
     }
-    ///// <summary>
-    ///// Zmiana daty na rano
-    ///// </summary>
-    //public void MoveTo(DateTime utcNow)
-    //{ POZMIENIAC BO TYLKO SKOPIOWANE
-    //    EnsureState(NotificationStatus.Scheduled);
 
-    //    ScheduledAtUtc = utcNow;
-    //    Touch();
-    //}
+    public void Reschedule(DateTime newScheduledAtUtc)
+    {
+        ScheduledAtUtc = DateTime.SpecifyKind(newScheduledAtUtc, DateTimeKind.Utc);
+        Status = NotificationStatus.Scheduled;
+        Touch();
+    }
 
     public bool IsTerminal()
         => Status is NotificationStatus.Sent or NotificationStatus.Failed or NotificationStatus.Canceled;

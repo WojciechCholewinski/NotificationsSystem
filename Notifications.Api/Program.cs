@@ -1,11 +1,13 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Notifications.Api.Background;
+using Notifications.Api.Consumers;
 using Notifications.Application.Scheduling;
 using Notifications.Infrastructure.Persistence;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services
     .AddControllers()
@@ -20,8 +22,14 @@ var conn = builder.Configuration.GetConnectionString("NotificationsDb");
 builder.Services.AddDbContext<NotificationsDbContext>(opt =>
     opt.UseNpgsql(conn));
 
+builder.Services.AddScoped<IQuietHoursPlanner, QuietHoursPlanner>();
+builder.Services.AddHostedService<NotificationsDispatcher>();
+
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<NotificationSentConsumer>();
+    x.AddConsumer<NotificationFailedConsumer>();
+
     x.UsingRabbitMq((context, cfg) =>
     {
         var host = builder.Configuration["RabbitMq:Host"] ?? "localhost";
@@ -33,10 +41,21 @@ builder.Services.AddMassTransit(x =>
             h.Username(user);
             h.Password(pass);
         });
+
+
+        // ¿eby API zaczê³o konsumowaæ eventy
+
+        cfg.ReceiveEndpoint("notification.sent", e =>
+        {
+            e.ConfigureConsumer<NotificationSentConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("notification.failed", e =>
+        {
+            e.ConfigureConsumer<NotificationFailedConsumer>(context);
+        });
     });
 });
-builder.Services.AddSingleton<IQuietHoursPlanner, QuietHoursPlanner>();
-builder.Services.AddHostedService<NotificationsDispatcher>();
 
 var app = builder.Build();
 
